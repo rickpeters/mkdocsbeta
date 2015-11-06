@@ -14,7 +14,7 @@ RUN apt-get update && \
 ADD search-results-template.mustache /usr/local/lib/python3.4/site-packages/mkdocs/assets/search/mkdocs/js/
 
 # add markdown extension
-ADD mdx_graphviz.py /usr/local/lib/python3.4/site-packages/markdown/extensions/
+ADD mdx_graphviz.py /usr/local/lib/python3.5/site-packages/markdown/extensions/
 
 ENV TZ Europe/Amsterdam
 # since we use it as development container, default action is a shell
