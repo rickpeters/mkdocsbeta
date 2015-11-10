@@ -54,27 +54,43 @@ their lines and should be immediately followed by a newline.
 import markdown, re, markdown.preprocessors, subprocess
 
 class GraphvizExtension(markdown.Extension):
-    def __init__(self, configs):
-        self.config = {'FORMAT':'png', 'BINARY_PATH':"", 'WRITE_IMGS_DIR':"", "BASE_IMG_LINK_DIR":""}
-        for key, value in configs:
-            self.config[key] = value
-    
+    def __init__(self, *args, **kwargs):
+        self.config = {
+            'FORMAT': ['png', "Default format for generated files"],
+            'BINARY_PATH': ['', "Location of dot binary on OS"],
+            'WRITE_IMGS_DIR': ['', "OS directory for generating images"],
+            'BASE_IMG_LINK_DIR': ['', "Directory for http linking images"]
+        }
+        
+        if len(args):
+            for key, value in args[0]:
+                self.setConfig(key, value)
+
+        # Override defaults with user settings
+        # This is not legacy code but is used instead of the super call below because we have to support the legacy version
+        if hasattr(self, 'setConfigs'):
+           self.setConfigs(kwargs)    
+
     def reset(self):
         pass
 
     def extendMarkdown(self, md, md_globals):
+        config = self.getConfigs();
+        
         "Add GraphvizExtension to the Markdown instance."
         md.registerExtension(self)
         self.parser = md.parser
-        md.preprocessors.add('graphviz', GraphvizPreprocessor(self), '_begin')
+        md.preprocessors.add('graphviz', GraphvizPreprocessor(self, md, config), '_begin')
 
 class GraphvizPreprocessor(markdown.preprocessors.Preprocessor):
     "Find all graphviz blocks, generate images and inject image link to generated images."
 
-    def __init__ (self, graphviz):
+    def __init__ (self, graphviz, md, config):
         self.graphviz = graphviz
         self.formatters = ["dot", "neato", "lefty", "dotty"]
-
+        
+        self.config = config
+        
     def run(self, lines):
         start_tags = [ "<%s>" % x for x in self.formatters ]
         end_tags = [ "</%s>" % x for x in self.formatters ]
@@ -106,20 +122,42 @@ class GraphvizPreprocessor(markdown.preprocessors.Preprocessor):
     def graph(self, n, type, lines):
         "Generates a graph from lines and returns a string containing n image link to created graph."
         assert(type in self.formatters)        
-        cmd = "%s%s -T%s" % (self.graphviz.config["BINARY_PATH"],
+        cmd = "%s%s -T%s" % (self.config['BINARY_PATH'],
                              type,
-                             self.graphviz.config["FORMAT"])
+                             self.config['FORMAT'])
+        #print("DEBUG: dot command: ", cmd)
         p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-        #(child_stdin, child_stdout) = (p.stdin, p.stdout) 
-        p.stdin.write("\n".join(lines))
+        #(child_stdin, child_stdout) = (p.stdin, p.stdout)
+        #print("DEBUG: lines: ", "\n".join(lines)) 
+        p.stdin.write("\n".join(lines).encode('utf-8'))
         p.stdin.close()
         p.wait()
-        filepath = "%s%s.%s" % (self.graphviz.config["WRITE_IMGS_DIR"], n, self.graphviz.config["FORMAT"])
-        fout = open(filepath, 'w')
-        fout.write(p.stdout.read())
-        fout.close()
-        output_path = "%s%s.%s" % (self.graphviz.config["BASE_IMG_LINK_DIR"], n, self.graphviz.config["FORMAT"])
-        return "![Graphviz chart %s](%s)" % (n, output_path)
+        # if format = SVG then it will be a embedded picture
+        if self.config['FORMAT'] == 'svg':
+            # this should be a full SVG format
+            svg_string = p.stdout.read().decode('utf-8')
+            #print("DEBUG: svg:\n ", svg_string)
+            # we have to remove the xml header itself and only keep the <svg> tag
+            lines = svg_string.splitlines(True)
+            outputstring = ''
+            startoutput = False
+            for line in lines:
+                if '<svg' in line:
+                    startoutput = True
+                if startoutput:
+                    outputstring += line
+            
+            #print("DEBUG: outputstring: \n", outputstring) 
+            
 
-def makeExtension(configs=None) :
-    return GraphvizExtension(configs=configs)
+            return outputstring
+        else:
+            filepath = "%s%s.%s" % (self.config['WRITE_IMGS_DIR'], n, self.config['FORMAT'])
+            fout = open(filepath, 'bw')
+            fout.write(p.stdout.read())
+            fout.close()
+            output_path = "%s%s.%s" % (self.config['BASE_IMG_LINK_DIR'], n, self.config['FORMAT'])
+            return "![Graphviz chart %s](%s)" % (n, output_path)
+
+def makeExtension(*args, **kwargs) :
+    return GraphvizExtension(*args, **kwargs)

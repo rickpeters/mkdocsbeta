@@ -1,0 +1,8 @@
+test:
+  image: rickpeters/mkdocsbeta
+  command: mkdocs serve --dev-addr=0.0.0.0:8000
+  ports:
+   - "8002:8000"
+  volumes:
+   - ./doc:/usr/src/app/
+   - ./mdx_graphviz.py:/usr/local/lib/python3.5/site-packages/markdown/extensions/mdx_graphviz.py
