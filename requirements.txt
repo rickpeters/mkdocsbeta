@@ -1,5 +1,5 @@
 PyExecJS
-https://github.com/waylan/mkdocs/archive/search.zip
+#https://github.com/waylan/mkdocs/archive/search.zip
 #-e git+https://github.com/waylan/mkdocs.git@search#egg=mkdocs
 https://github.com/mkdocs/mkdocs/archive/master.tar.gz
 # force change to get new version
