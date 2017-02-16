@@ -87,7 +87,7 @@ class GraphvizPreprocessor(markdown.preprocessors.Preprocessor):
 
     def __init__ (self, graphviz, md, config):
         self.graphviz = graphviz
-        self.formatters = ["dot", "neato", "lefty", "dotty"]
+        self.formatters = ["dot", "neato", "lefty", "dotty", "fdp"]
         
         self.config = config
         
