@@ -131,11 +131,11 @@ class GraphvizPreprocessor(markdown.preprocessors.Preprocessor):
         #print("DEBUG: lines: ", "\n".join(lines)) 
         p.stdin.write("\n".join(lines).encode('utf-8'))
         p.stdin.close()
-        p.wait()
+        output = p.communicate()[0]
         # if format = SVG then it will be a embedded picture
         if self.config['FORMAT'] == 'svg':
             # this should be a full SVG format
-            svg_string = p.stdout.read().decode('utf-8')
+            svg_string = output.decode('utf-8')
             #print("DEBUG: svg:\n ", svg_string)
             # we have to remove the xml header itself and only keep the <svg> tag
             lines = svg_string.splitlines(True)
@@ -154,7 +154,7 @@ class GraphvizPreprocessor(markdown.preprocessors.Preprocessor):
         else:
             filepath = "%s%s.%s" % (self.config['WRITE_IMGS_DIR'], n, self.config['FORMAT'])
             fout = open(filepath, 'bw')
-            fout.write(p.stdout.read())
+            fout.write(output)
             fout.close()
             output_path = "%s%s.%s" % (self.config['BASE_IMG_LINK_DIR'], n, self.config['FORMAT'])
             return "![Graphviz chart %s](%s)" % (n, output_path)
