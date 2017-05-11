@@ -1,5 +1,7 @@
 PyExecJS
-https://github.com/waylan/mkdocs/archive/search.zip
+#https://github.com/waylan/mkdocs/archive/search.zip
 #-e git+https://github.com/waylan/mkdocs.git@search#egg=mkdocs
 https://github.com/mkdocs/mkdocs/archive/master.tar.gz
 # force change to get new version
+# 2016-10-18 new version to solve --dirtyreload problem : --dirty
+# 2016-12-01 there should be a new version now
